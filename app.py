@@ -18,29 +18,31 @@ db_config = {
 def get_db_connection():
     return mysql.connector.connect(**db_config)
 
-@app.route('/')
-def home():
-    return 'Chatbot backend is up!'
-
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.get_json()
-    user_message = data.get('message', '')
+    user_message = data.get('message', '').lower()
+
+    if "show clients" in user_message or "show data" in user_message:
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM clientrecords")
+            clients = cursor.fetchall()
+            cursor.close()
+            conn.close()
+
+            if not clients:
+                return jsonify({'response': 'No client records found.'})
+
+            response_text = "🧾 Client Records:\n"
+            for client in clients:
+                response_text += f"- {client['id']}: {client['name']} | {client['email']} | {client['phone']}\n"
+            return jsonify({'response': response_text})
+
+        except Exception as e:
+            return jsonify({'response': f"Error retrieving client data: {str(e)}"})
+
+    # Default to chatbot response
     reply = dental_ai_response(user_message)
     return jsonify({'response': reply})
-
-@app.route('/clients', methods=['GET'])
-def get_clients():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM clientrecords")
-        clients = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        return jsonify({"clients": clients})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True)
