@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: dental-chatbot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: DB_HOST
+        value: mysql.hostinger.com
+      - key: DB_USER
+        value: u589544679_admin
+      - key: DB_PASSWORD
+        value: EW8207A.Asaki
+      - key: DB_NAME
+        value: u589544679_clinic
